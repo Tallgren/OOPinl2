@@ -4,73 +4,69 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Huvudprogram {
+    ArrayList<Customer> costumers = new ArrayList<>();
+    String path = ".idea/customers.txt";
 
-    public ArrayList<Customer> createCustomerList() throws FileNotFoundException {
-        ArrayList<Customer> customerList = new ArrayList<>();
-        Scanner in = new Scanner(new File(".idea/customers.txt"));
-        String[] firstLine = new String[2];
-        LocalDate secondLine = null;
+    public ArrayList<Customer> createCustomerList(ArrayList<Customer> customerList, String path) {
 
-        while (in.hasNextLine()) {
-            firstLine = in.nextLine().split(",");
-            if (in.hasNextLine()) {
-                secondLine = LocalDate.parse(in.nextLine().trim());
+        try(Scanner in = new Scanner(new File(path))) {
+
+            String[] firstLine = new String[2];
+            LocalDate secondLine = null;
+
+            while (in.hasNextLine()) {
+                firstLine = in.nextLine().split(",");
+                if (in.hasNextLine()) {
+                    secondLine = LocalDate.parse(in.nextLine().trim());
+                }
+                Customer c = new Customer(firstLine[0], firstLine[1].trim(), secondLine);
+
+                customerList.add(c);
             }
-            Customer c = new Customer(firstLine[0], firstLine[1].trim(), secondLine);
-
-            customerList.add(c);
+        } catch (FileNotFoundException e) {
+            System.out.println("Fil hittades inte");
         }
         return customerList;
     }
 
-    public void isInputCustomer() throws IOException {
+    public void isInputCustomer() {
         Scanner input = new Scanner(System.in);
-        ArrayList<Customer> customerList = createCustomerList();
-        boolean customer = false;
-
+        ArrayList<Customer> customerList = createCustomerList(costumers, path);
 
         while (true) {
-            int customerIndex = 0;
+            System.out.println("\nAnge Namn eller Personnummer:");
+            boolean doesNotExistInList = true;
 
-            System.out.println("Ange Namn eller Personnummer:");
-
-            //Kör om input är personnummer, returnerar boolean om kund finns i listan
+            //Kör om input är personnummer, kollar om personnummer finns i listan
             if (input.hasNextLong()) {
-                long longInput = input.nextLong();
+                long longInput = Long.parseLong(input.nextLine());
                 for (Customer element : customerList) {
                     if (longInput == element.getSocSecNumber()) {
-                        customer = true;
-                        customerIndex = customerList.indexOf(element);
+                        doesNotExistInList = false;
+                        element.ifCustomerExistsInList();
                         break;
                     }
                 }
             }
-            //Kör om input är namn, returnerar boolean om kund finns i listan
-            else if (input.hasNext()) {
+            //Kör om input är string, kollar om namn finns i listan
+            else if (input.hasNext()){
                 String stringInput = input.nextLine();
                 for (Customer element : customerList) {
                     if (stringInput.equals(element.getName())) {
-                        customer = true;
-                        customerIndex = customerList.indexOf(element);
+                        element.ifCustomerExistsInList();
+                        doesNotExistInList = false;
                         break;
                     }
                 }
             }
 
-            //Kör om kunden finns i textfilen
-            if (customer) {
-                Customer c = customerList.get(customerIndex);
-                boolean isMember = c.checkDateIfMember();
-                c.saveMemberData(c, isMember);
-                c.printMemberOrNot(isMember);
-            }
-            else {
-                System.out.println("Du har aldrig varit medlem hos oss");
+            if (doesNotExistInList) {
+                System.out.println("Du har aldrig varit medlem på gymmet!");
             }
         }
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
     Huvudprogram huvudprogram = new Huvudprogram();
     huvudprogram.isInputCustomer();
     }

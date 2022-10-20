@@ -1,61 +1,66 @@
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.Buffer;
-import java.nio.file.Files;
+import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.DateFormat;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.Arrays;
 
 public class Customer {
-
     long socSecNumber;
     String name;
-    LocalDate ld;
+    LocalDate lastTimePayed;
 
-    boolean member;
-
-    public Customer(String socSecNumber, String name, LocalDate ld) {
+    public Customer(String socSecNumber, String name, LocalDate lastTimePayed) {
         this.socSecNumber = Long.parseLong(socSecNumber);
         this.name = name;
-        this.ld = ld;
+        this.lastTimePayed = lastTimePayed;
+    }
+
+    public void ifCustomerExistsInList() {
+        boolean isMember = checkDateIfMember();
+        Path path = Paths.get(".idea/membershipData.txt");
+        saveMemberData(isMember, path);
+        printMemberOrNot(isMember);
     }
 
     public boolean checkDateIfMember() {
         LocalDate lastYear = LocalDate.now().minusYears(1);
-        if (ld.isBefore(lastYear)) {
+        if (lastTimePayed.isBefore(lastYear)) {
             return false;
         }
         else return true;
     }
 
-    public void saveMemberData(Customer c, boolean isMember) throws IOException {
+    public void saveMemberData(boolean isMember, Path path) {
         if (isMember) {
-            FileWriter ut = new FileWriter(".idea/membershipData.txt", true);
-            ut.write(c.getName() + " " + c.getSocSecNumber() + " " + LocalDate.now() + "\n");
-            ut.close();
+            try(FileWriter fileWriter = new FileWriter(path.toFile(), true);
+                BufferedWriter ut = new BufferedWriter(fileWriter)) {
+                ut.write(name + " " + socSecNumber + " " + LocalDate.now() + "\n");
+            } catch (FileNotFoundException e) {
+                System.out.println("Filen kunde inte hittas vid sparning av data");
+                e.printStackTrace();
+            }
+            catch (IOException f) {
+                System.out.println("Något gick fel vid sparning av data");
+                f.printStackTrace();
+            }
+        }
+    }
+
+    public void printMemberOrNot(boolean isMember) {
+        if (isMember) {
+            System.out.println("Välkommen till gymmet, du betalade medlemskap senast: " + lastTimePayed);
+        }
+        else {
+            System.out.println("Du är inte medlem! Din senaste betalning var: " + lastTimePayed);
         }
     }
 
     public String getName() {
         return name;
     }
-
     public long getSocSecNumber() {
         return socSecNumber;
     }
-
-    public void printMemberOrNot(boolean isMember) {
-         if (isMember) {
-             System.out.println("Välkommen till gymmet, du betalade medlemskap senast: " + ld);
-         }
-         else {
-             System.out.println("Du är inte medlem! Din senaste betalning var: " + ld);
-         }
+    public LocalDate getLastTimePayed() {
+        return lastTimePayed;
     }
 }
